@@ -1,7 +1,26 @@
-
 <?php
 include_once 'ssinc.php';
 // SStats - Statistiksoftware für OpenSimulator-Server
+
+// Zusätzliche Sicherheitsheader
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+if (session_status() === PHP_SESSION_NONE) {
+	session_start([
+		'cookie_httponly' => true,
+		'cookie_secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+		'cookie_samesite' => 'Strict',
+	]);
+}
+
+// CSRF-Basisschutz für POST-Formulare (falls später genutzt)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+		http_response_code(403);
+		exit('Ungültiges CSRF-Token.');
+	}
+}
 
 // Regionen laden
 $sql_regions = 'SELECT uuid, regionName, locX, locY, sizeX, sizeY, serverIP, serverPort FROM regions ORDER BY regionName';
